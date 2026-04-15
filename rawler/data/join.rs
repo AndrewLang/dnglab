@@ -26,7 +26,7 @@ fn join_cameras() {
   for entry in glob("./data/cameras/*/**/*.toml").expect("Failed to read glob pattern") {
     out.write_all(b"[[cameras]]\n").expect("Failed to write camera TOML");
     let path = entry.expect("Invalid glob entry");
-    
+
     // Watch each file
     println!("cargo:rerun-if-changed={}", path.display());
 

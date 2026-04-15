@@ -235,11 +235,7 @@ impl RawDevelop {
         .map(|(_, m)| m.clone())
         .unwrap_or_else(|| {
           log::warn!("Illuminant matrix D65 not found, using identity fallback.");
-          vec![
-            1.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 0.0, 1.0,
-          ]
+          vec![1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
         });
 
       assert_eq!(color_matrix.len() % 3, 0);
@@ -384,4 +380,3 @@ impl RawDevelop {
     Ok(())
   }
 }
-

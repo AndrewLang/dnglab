@@ -1,9 +1,10 @@
 use crate::{
-  cfa::{PlaneColor, CFA, CFA_COLOR_B, CFA_COLOR_G, CFA_COLOR_R},
+  cfa::{CFA, CFA_COLOR_B, CFA_COLOR_G, CFA_COLOR_R, PlaneColor},
   imgop::{
-    sensor::bayer::Demosaic,
-    Dim2, Point, // Import Point
+    Dim2,
+    Point, // Import Point
     Rect,
+    sensor::bayer::Demosaic,
   },
   pixarray::{Color2D, PixF32},
 };
@@ -89,11 +90,14 @@ impl Demosaic<f32, 3> for XTransDemosaic {
             g_h // Only horizontal Gs available
           } else {
             // Both horizontal and vertical Gs exist, use gradient to decide.
-            if (h_grad - v_grad).abs() < 0.001 { // Gradients are similar
+            if (h_grad - v_grad).abs() < 0.001 {
+              // Gradients are similar
               (g_h_sum + g_v_sum) / (g_h_count + g_v_count) as f32
-            } else if h_grad < v_grad { // Horizontal edge
+            } else if h_grad < v_grad {
+              // Horizontal edge
               g_h
-            } else { // Vertical edge
+            } else {
+              // Vertical edge
               g_v
             }
           };
@@ -119,29 +123,53 @@ impl Demosaic<f32, 3> for XTransDemosaic {
           // Left
           if roi_x > 0 {
             match cfa.color_at(roi_y, roi_x - 1) {
-              CFA_COLOR_R => { r_sum += padded.at(y, x - 1)[CFA_COLOR_R]; r_count += 1; }
-              CFA_COLOR_B => { b_sum += padded.at(y, x - 1)[CFA_COLOR_B]; b_count += 1; }
+              CFA_COLOR_R => {
+                r_sum += padded.at(y, x - 1)[CFA_COLOR_R];
+                r_count += 1;
+              }
+              CFA_COLOR_B => {
+                b_sum += padded.at(y, x - 1)[CFA_COLOR_B];
+                b_count += 1;
+              }
               _ => {}
             }
           }
           // Right
           match cfa.color_at(roi_y, roi_x + 1) {
-            CFA_COLOR_R => { r_sum += padded.at(y, x + 1)[CFA_COLOR_R]; r_count += 1; }
-            CFA_COLOR_B => { b_sum += padded.at(y, x + 1)[CFA_COLOR_B]; b_count += 1; }
+            CFA_COLOR_R => {
+              r_sum += padded.at(y, x + 1)[CFA_COLOR_R];
+              r_count += 1;
+            }
+            CFA_COLOR_B => {
+              b_sum += padded.at(y, x + 1)[CFA_COLOR_B];
+              b_count += 1;
+            }
             _ => {}
           }
           // Top
           if roi_y > 0 {
             match cfa.color_at(roi_y - 1, roi_x) {
-              CFA_COLOR_R => { r_sum += padded.at(y - 1, x)[CFA_COLOR_R]; r_count += 1; }
-              CFA_COLOR_B => { b_sum += padded.at(y - 1, x)[CFA_COLOR_B]; b_count += 1; }
+              CFA_COLOR_R => {
+                r_sum += padded.at(y - 1, x)[CFA_COLOR_R];
+                r_count += 1;
+              }
+              CFA_COLOR_B => {
+                b_sum += padded.at(y - 1, x)[CFA_COLOR_B];
+                b_count += 1;
+              }
               _ => {}
             }
           }
           // Bottom
           match cfa.color_at(roi_y + 1, roi_x) {
-            CFA_COLOR_R => { r_sum += padded.at(y + 1, x)[CFA_COLOR_R]; r_count += 1; }
-            CFA_COLOR_B => { b_sum += padded.at(y + 1, x)[CFA_COLOR_B]; b_count += 1; }
+            CFA_COLOR_R => {
+              r_sum += padded.at(y + 1, x)[CFA_COLOR_R];
+              r_count += 1;
+            }
+            CFA_COLOR_B => {
+              b_sum += padded.at(y + 1, x)[CFA_COLOR_B];
+              b_count += 1;
+            }
             _ => {}
           }
 
@@ -197,7 +225,8 @@ impl Demosaic<f32, 3> for XTransDemosaic {
             if color_idx == CFA_COLOR_B {
               // Interpolate R at B locations
               padded.at_mut(y, x)[CFA_COLOR_R] = r_sum / g_neighbor_count as f32;
-            } else { // color_idx == CFA_COLOR_R
+            } else {
+              // color_idx == CFA_COLOR_R
               // Interpolate B at R locations
               padded.at_mut(y, x)[CFA_COLOR_B] = b_sum / g_neighbor_count as f32;
             }
@@ -207,10 +236,7 @@ impl Demosaic<f32, 3> for XTransDemosaic {
     }
 
     // Crop the padding off to return the final image
-    padded.crop(Rect::new_with_points(
-      Point::new(2, 2),
-      Point::new(padded.width - 2, padded.height - 2),
-    ))
+    padded.crop(Rect::new_with_points(Point::new(2, 2), Point::new(padded.width - 2, padded.height - 2)))
   }
 }
 
@@ -226,16 +252,13 @@ impl XTransSuperpixelDemosaic {
 impl Demosaic<f32, 3> for XTransSuperpixelDemosaic {
   fn demosaic(&self, pixels: &PixF32, cfa: &CFA, colors: &PlaneColor, roi: Rect) -> Color2D<f32, 3> {
     let dim = pixels.dim();
-    
+
     // Ensure ROI is within image bounds and adjust to multiple of 6
     let safe_roi = Rect::new(
-      roi.p, 
-      Dim2::new(
-        (roi.width().min(dim.w - roi.p.x) / 6) * 6,
-        (roi.height().min(dim.h - roi.p.y) / 6) * 6
-      )
+      roi.p,
+      Dim2::new((roi.width().min(dim.w - roi.p.x) / 6) * 6, (roi.height().min(dim.h - roi.p.y) / 6) * 6),
     );
-    
+
     if safe_roi.width() == 0 || safe_roi.height() == 0 {
       // Return a minimal image matching the original ROI size
       return Color2D::new_with(vec![[0.0, 0.0, 0.0]; roi.width() * roi.height()], roi.width(), roi.height());
@@ -258,15 +281,15 @@ impl Demosaic<f32, 3> for XTransSuperpixelDemosaic {
           for x_offset in 0..6 {
             let src_y = safe_roi.y() + block_y * 6 + y_offset;
             let src_x = safe_roi.x() + block_x * 6 + x_offset;
-            
+
             if src_y < dim.h && src_x < dim.w {
               let pixel_idx = src_y * dim.w + src_x;
               if pixel_idx < pixels.data.len() {
                 let pixel_value = pixels.data[pixel_idx];
-                
+
                 // Get the color (R, G, or B) at this position from the shifted CFA.
                 let cfa_color_val = cfa.color_at(y_offset, x_offset);
-                
+
                 if cfa_color_val == CFA_COLOR_R {
                   sums[0] += pixel_value; // Red channel
                   counts[0] += 1;
@@ -293,7 +316,7 @@ impl Demosaic<f32, 3> for XTransSuperpixelDemosaic {
           for x_offset in 0..6 {
             let out_y = block_y * 6 + y_offset;
             let out_x = block_x * 6 + x_offset;
-            
+
             // Make sure we don't go beyond the safe ROI bounds
             if out_y < safe_roi.height() && out_x < safe_roi.width() {
               let out_idx = out_y * roi.width() + out_x;

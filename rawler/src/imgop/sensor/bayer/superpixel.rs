@@ -2,8 +2,8 @@
 // Copyright 2021 Daniel Vogelbacher <daniel@chaospixel.com>
 
 use crate::{
-  cfa::{PlaneColor, CFA},
-  imgop::{sensor::bayer::RgbBayerPattern, Dim2, Rect},
+  cfa::{CFA, PlaneColor},
+  imgop::{Dim2, Rect, sensor::bayer::RgbBayerPattern},
   pixarray::{Color2D, PixF32},
 };
 use rayon::prelude::*;

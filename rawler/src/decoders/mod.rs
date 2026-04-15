@@ -951,7 +951,7 @@ impl RawLoader {
             "FUJIFILM" => {
               let dec = Box::new(raf::RafDecoder::new(rawfile, self)?);
               return Ok(dec as Box<dyn Decoder>);
-            },
+            }
             "NIKON" => return use_decoder!(nrw::NrwDecoder, rawfile, tiff, self),
             "NIKON CORPORATION" => return use_decoder!(nef::NefDecoder, rawfile, tiff, self),
             x => {

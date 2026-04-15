@@ -466,17 +466,17 @@ pub fn deinterleave2x2(input: &PixU16) -> crate::Result<PixU16> {
   if input.width % 2 != 0 || input.height % 2 != 0 {
     return Err("deinterleave2x2: input dimensions must be even".into());
   }
-  
+
   let new_width = input.width / 2;
   let new_height = input.height / 2;
   let mut output = PixU16::new(new_width * 2, new_height * 2);
-  
+
   // Copy the data with deinterleaving
   for row in 0..new_height {
     for col in 0..new_width {
       let src_row = row * 2;
       let src_col = col * 2;
-      
+
       // Top-left quadrant (R)
       output.data[row * new_width + col] = input.data[src_row * input.width + src_col];
       // Top-right quadrant (G1)
@@ -487,7 +487,7 @@ pub fn deinterleave2x2(input: &PixU16) -> crate::Result<PixU16> {
       output.data[row * new_width + col + new_width * new_height * 3] = input.data[(src_row + 1) * input.width + src_col + 1];
     }
   }
-  
+
   Ok(output)
 }
 
